@@ -253,16 +253,16 @@ StartLaunchNet7()
 
     failed := 0
     Loop {
-        if FindAndActivateIfExists("Update available") {
+        if FindAndActivateIfExists("LaunchNet7 - Information") {
             failed := 0
-            ControlClick("Update")
+            ControlClick("Cancel")
             WinWaitClose()
             continue
         }
 
-        if FindAndActivateIfExists("LaunchNet7 - Information") {
+        if FindAndActivateIfExists("Update available") {
             failed := 0
-            ControlClick("Cancel")
+            ControlClick("Update")
             WinWaitClose()
             continue
         }

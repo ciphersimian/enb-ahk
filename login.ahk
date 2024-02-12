@@ -35,15 +35,22 @@ CLIENT_HEIGHT := "default"
 ;CLIENT_WIDTH := "1280"
 ;CLIENT_HEIGHT := "960"
 
-; These can be used to tweak the size and position of the client windows
-; respectively while mostly using the default sizing/positioning. This was
-; necessary on Linux but probably isn't on Windows.
-CLIENT_X_BORDER_DELTA := 0 ; -6 for Linux
-CLIENT_Y_BORDER_DELTA := 0 ; 6 for Linux
+; These deltas can be used to tweak the size and position of the client
+; windows while mostly using the default sizing/positioning. This was necessary
+; on Linux but probably isn't on Windows.
+
+; These only apply when default sizing and positioning are used.
 CLIENT_X_MOVE_DELTA := 0 ; -6 for Linux
-CLIENT_Y_MOVE_DELTA := 0 ; 10 for Linux
+CLIENT_Y_MOVE_DELTA := 0 ; +10 for Linux
 CLIENT_X_DESKTOP_DELTA := 0 ; -4 for Linux
-CLIENT_Y_DESKTOP_DELTA := 0 ; 0 for Linux
+CLIENT_Y_DESKTOP_DELTA := 0
+
+CLIENT_Y_TITLE_BAR_DELTA := 0 ; +10 for Linux
+CLIENT_X_BORDER_DELTA := 0
+CLIENT_Y_BORDER_DELTA := 0
+SM_CYCAPTION := SysGet(4) + CLIENT_Y_TITLE_BAR_DELTA ; Title bar height
+SM_CXBORDER := SysGet(5) + CLIENT_X_BORDER_DELTA
+SM_CYBORDER := SysGet(6) + CLIENT_Y_BORDER_DELTA
 
 ; Client 1
 USER1 := "user1"
@@ -192,7 +199,7 @@ MsgBox "Initialized! Ctrl+Shift+m to start clients"
 ; SetResolution(6, 3, 2)
 SetResolution(Clients, gx, gy) {
     global
-    local WL, WT, WR, WB, w, h, xwaste, ywaste, ids, id, OutWidth, OutHeight, cw, ch, cww, cwh
+    local WL, WT, WR, WB, w, h, xwaste, ywaste, cw, ch
     CURRENT_CLIENTS := Clients
     if CLIENT_WIDTH == "default" {
         ; get the max possible area we can occupy sans task bars, etc.
@@ -200,24 +207,9 @@ SetResolution(Clients, gx, gy) {
         w := WR - WL
         h := WB - WT
 
-        ; just get a list of all the windows and find one that has dimensions and use it for calc
-        xwaste := 0
-        ywaste := 0
-        ids := WinGetList()
-        for id in ids {
-            FindAndActivate("ahk_id " id)
-            WinGetClientPos(, , &OutWidth, &OutHeight, "ahk_id " id)
-            ; ignore zero size windows
-            if (! OutWidth or ! OutHeight)
-                continue
-
-            ; get the amount of wasted space associated with each window due to title bars and borders
-            GetGameAreaSizeByTitle("ahk_id " id, &cw, &ch)
-            GetWindowSizeWithBordersByTitle("ahk_id " id, &cww, &cwh)
-            xwaste := cww - cw + CLIENT_X_BORDER_DELTA ; 6 before delta
-            ywaste := cwh - ch + CLIENT_Y_BORDER_DELTA ; 32 before delta
-            break
-        }
+        ; calculate the space consumed by the borders and title bar ("caption")
+        xwaste := (2 * SM_CXBORDER)
+        ywaste := (2 * SM_CYBORDER) + SM_CYCAPTION
 
         ; reduce the work area by that amount times the expected number of clients
         w := w - (xwaste * gx)

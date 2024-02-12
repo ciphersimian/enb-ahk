@@ -2,7 +2,7 @@
 NeedsConfiguration()
 NeedsConfiguration() {
     local L, T, R, B, WL, WT, WR, WB
-    MsgBox "FIXME - You need to modify login.ahk to set the configuration values and remove the call to this function!"
+    MsgBox "FIXME - You need to modify login.ahk to set the configuration values and remove the call to this function! You can use the following monitor config..."
     MonitorCount := MonitorGetCount()
     MonitorPrimary := MonitorGetPrimary()
     MsgBox "Monitor Count:`t" MonitorCount "`nPrimary Monitor:`t" MonitorPrimary
@@ -192,7 +192,7 @@ MsgBox "Initialized! Ctrl+Shift+m to start clients"
 ; SetResolution(6, 3, 2)
 SetResolution(Clients, gx, gy) {
     global
-    local WL, WT, WR, WB, w, h, cw, ch, cww, cwh, xwaste, ywaste
+    local WL, WT, WR, WB, w, h, xwaste, ywaste, ids, id, OutWidth, OutHeight, cw, ch, cww, cwh
     CURRENT_CLIENTS := Clients
     if CLIENT_WIDTH == "default" {
         ; get the max possible area we can occupy sans task bars, etc.
@@ -200,11 +200,24 @@ SetResolution(Clients, gx, gy) {
         w := WR - WL
         h := WB - WT
 
-        ; get the amount of wasted space associated with each window due to title bars and borders
-        GetGameAreaSizeByTitle("A", &cw, &ch)
-        GetWindowSizeWithBordersByTitle("A", &cww, &cwh)
-        xwaste := cww - cw + CLIENT_X_BORDER_DELTA ; 6 before delta
-        ywaste := cwh - ch + CLIENT_Y_BORDER_DELTA ; 32 before delta
+        ; just get a list of all the windows and find one that has dimensions and use it for calc
+        xwaste := 0
+        ywaste := 0
+        ids := WinGetList()
+        for id in ids {
+            FindAndActivate("ahk_id " id)
+            WinGetClientPos(, , &OutWidth, &OutHeight, "ahk_id " id)
+            ; ignore zero size windows
+            if (! OutWidth or ! OutHeight)
+                continue
+
+            ; get the amount of wasted space associated with each window due to title bars and borders
+            GetGameAreaSizeByTitle("ahk_id " id, &cw, &ch)
+            GetWindowSizeWithBordersByTitle("ahk_id " id, &cww, &cwh)
+            xwaste := cww - cw + CLIENT_X_BORDER_DELTA ; 6 before delta
+            ywaste := cwh - ch + CLIENT_Y_BORDER_DELTA ; 32 before delta
+            break
+        }
 
         ; reduce the work area by that amount times the expected number of clients
         w := w - (xwaste * gx)
